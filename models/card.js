@@ -28,15 +28,6 @@ const card = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  array: {
-    type: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
-    default: [],
-  },
 });
 
 module.exports = mongoose.model('card', card);
