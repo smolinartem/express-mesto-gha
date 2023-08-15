@@ -6,7 +6,9 @@ const { auth } = require('./middleware/auth');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 
-mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
+mongoose.connect('mongodb://127.0.0.1:27017/mestodb')
+  .then(console.log('Connected to MongoDB'))
+  .catch((err) => console.log(err.message));
 
 const app = express();
 
