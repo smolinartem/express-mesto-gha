@@ -49,7 +49,7 @@ const updateUser = (req, res) => {
       return res.status(200).send({ user });
     })
     .catch((err) => {
-      if (err instanceof Error.ValidatorError) {
+      if (err instanceof Error.ValidationError) {
         return res.status(400).send({ message: err.message });
       }
       if (err.message === 'NotFound') {
@@ -77,7 +77,7 @@ const updateAvatar = (req, res) => {
       if (err.message === 'NotFound') {
         return res.status(404).send({ message: 'Пользователь не найден' });
       }
-      if (err instanceof Error.ValidatorError) {
+      if (err instanceof Error.ValidationError) {
         return res.status(400).send({ message: err.message });
       }
       if (err instanceof Error.CastError) {
