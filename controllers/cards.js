@@ -23,13 +23,14 @@ const createNewCard = (req, res) => {
 
 const deleteCard = (req, res) => {
   Cards.findByIdAndDelete(req.params.cardId)
-    .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      return res.status(200).send({ message: 'Карточка удалена' });
+    .orFail(new Error('NotFound'))
+    .then(() => {
+      res.status(200).send({ message: 'Карточка удалена' });
     })
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Карточка не найдена' });
+      }
       if (err instanceof Error.CastError) {
         return res.status(400).send({ message: 'Переданы некорректные данные' });
       }
@@ -39,13 +40,14 @@ const deleteCard = (req, res) => {
 
 const likeCard = (req, res) => {
   Cards.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
+    .orFail(new Error('NotFound'))
     .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      return res.status(200).send({ card });
+      res.status(200).send({ card });
     })
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Карточка не найдена' });
+      }
       if (err instanceof Error.CastError) {
         return res.status(400).send({ message: 'Переданы некорректные данные' });
       }
@@ -55,6 +57,7 @@ const likeCard = (req, res) => {
 
 const dislikeCard = (req, res) => {
   Cards.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
+    .orFail(new Error('NotFound'))
     .then((card) => {
       if (!card) {
         return res.status(404).send({ message: 'Карточка не найдена' });
@@ -62,6 +65,9 @@ const dislikeCard = (req, res) => {
       return res.status(200).send({ card });
     })
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Карточка не найдена' });
+      }
       if (err instanceof Error.CastError) {
         return res.status(400).send({ message: 'Переданы некорректные данные' });
       }

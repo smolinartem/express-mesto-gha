@@ -8,7 +8,7 @@ const createNewUser = (req, res) => {
     .then((newUser) => res.status(201).send({ newUser }))
     .catch((err) => {
       if (err instanceof Error.ValidationError) {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
+        return res.status(400).send({ message: err.message });
       }
       return res.status(500).send({ message: err.message });
     });
@@ -22,13 +22,14 @@ const getAllUsers = (req, res) => {
 
 const getUserById = (req, res) => {
   Users.findById(req.params.userId)
+    .orFail(new Error('NotFound'))
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-      return res.status(200).send({ user });
+      res.status(200).send({ user });
     })
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Пользователь не найден' });
+      }
       if (err instanceof Error.CastError) {
         return res.status(400).send({ message: 'Переданы некорректные данные' });
       }
@@ -38,20 +39,22 @@ const getUserById = (req, res) => {
 
 const updateUser = (req, res) => {
   const { name, about } = req.body;
-  console.log(req.body);
 
-  Users.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+  Users.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
+    .orFail(new Error('NotFound'))
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-
       if (!name || !about) {
         return res.status(400).send({ message: 'Переданы некорректные данные' });
       }
       return res.status(200).send({ user });
     })
     .catch((err) => {
+      if (err instanceof Error.ValidatorError) {
+        return res.status(400).send({ message: err.message });
+      }
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Пользователь не найден' });
+      }
       if (err instanceof Error.CastError) {
         return res.status(400).send({ message: 'Передан некорректный id' });
       }
@@ -62,18 +65,21 @@ const updateUser = (req, res) => {
 const updateAvatar = (req, res) => {
   const { avatar } = req.body;
 
-  Users.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
+  Users.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
+    .orFail(new Error('NotFound'))
     .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-
       if (!avatar) {
         return res.status(400).send({ message: 'Переданы некорректные данные' });
       }
       return res.status(200).send({ user });
     })
     .catch((err) => {
+      if (err.message === 'NotFound') {
+        return res.status(404).send({ message: 'Пользователь не найден' });
+      }
+      if (err instanceof Error.ValidatorError) {
+        return res.status(400).send({ message: err.message });
+      }
       if (err instanceof Error.CastError) {
         return res.status(400).send({ message: 'Передан некорректный id' });
       }
