@@ -1,17 +1,38 @@
 const { Error } = require('mongoose');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const Users = require('../models/user');
 
-const createNewUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await Users.findUserByCredentials(email, password);
+    const token = jwt.sign({ _id: user._id }, 'key');
+    res.cookie('jwt', token, {
+      maxAge: 3600000 * 24 * 7,
+      httpOnly: true,
+    }).status(200).end();
+  } catch (err) {
+    res.status(401).send({ message: err.message });
+  }
+};
 
-  Users.create({ name, about, avatar })
-    .then((newUser) => res.status(201).send({ newUser }))
-    .catch((err) => {
-      if (err instanceof Error.ValidationError) {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: err.message });
+const createUser = async (req, res) => {
+  try {
+    const {
+      name, about, avatar, email, password,
+    } = req.body;
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await Users.create({
+      name, about, avatar, email, password: passwordHash,
     });
+    return res.status(201).send({ user });
+  } catch (err) {
+    if (err instanceof Error.ValidationError) {
+      return res.status(400).send({ message: err.message });
+    }
+    return res.status(500).send({ message: err.message });
+  }
 };
 
 const getAllUsers = (req, res) => {
@@ -88,7 +109,8 @@ const updateAvatar = (req, res) => {
 };
 
 module.exports = {
-  createNewUser,
+  login,
+  createUser,
   getAllUsers,
   getUserById,
   updateUser,

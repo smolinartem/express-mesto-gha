@@ -1,6 +1,20 @@
-module.exports.auth = (req, res, next) => {
-  req.user = {
-    _id: '64da107d3ebb24fe1d2fee97',
-  };
-  next();
+const jwt = require('jsonwebtoken');
+
+module.exports = (req, res, next) => {
+  const token = req.cookies.jwt;
+  if (!token) {
+    return res.status(401).send({ message: 'Необходима авторизация' });
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, 'key');
+  } catch (err) {
+    return res.status(401).send({ message: 'Необходима авторизация' });
+  }
+
+  req.user = payload;
+
+  return next();
 };
