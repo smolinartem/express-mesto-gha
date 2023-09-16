@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const UnauthorizedError = require('../errors/unauthorizedError');
 
 const userSchema = new mongoose.Schema(
   {
@@ -39,6 +40,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+      select: false,
       minlength: 5,
     },
   },
@@ -46,13 +48,13 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.static('findUserByCredentials', async function findUserByCredentials(email, password) {
-  const user = await this.findOne({ email });
+  const user = await this.findOne({ email }).select('+password');
   if (!user) {
-    throw new Error('Неправильные почта или пароль');
+    throw new UnauthorizedError('Неправильные почта или пароль');
   }
   const matched = await bcrypt.compare(password, user.password);
   if (!matched) {
-    throw new Error('Неправильные почта или пароль');
+    throw new UnauthorizedError('Неправильные почта или пароль');
   }
   return user;
 });
