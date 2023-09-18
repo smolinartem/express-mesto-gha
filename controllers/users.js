@@ -2,6 +2,7 @@ const { Error } = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Users = require('../models/user');
+const config = require('../config');
 
 const NotFoundError = require('../errors/notFoundError');
 const BadRequestError = require('../errors/badRequestError');
@@ -11,7 +12,7 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await Users.findUserByCredentials(email, password);
-    const token = jwt.sign({ _id: user._id }, 'key', { expiresIn: '7d' });
+    const token = jwt.sign({ _id: user._id }, config.JWT_SECRET, { expiresIn: '7d' });
     res.cookie('jwt', token, {
       maxAge: 3600000 * 24 * 7,
       httpOnly: true,

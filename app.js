@@ -1,11 +1,9 @@
-const { PORT = 3000, DB_URL = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 const helmet = require('helmet');
 const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
-
-const regex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+const config = require('./config');
 
 const auth = require('./middleware/auth');
 const error = require('./middleware/error');
@@ -14,7 +12,7 @@ const cardRouter = require('./routes/cards');
 const { createUser, login } = require('./controllers/users');
 
 mongoose
-  .connect(DB_URL)
+  .connect(config.DB_URL)
   .then(console.log('Connected to MongoDB'))
   .catch((err) => console.log(err.message));
 
@@ -30,7 +28,7 @@ app.post('/signup', celebrate({
     password: Joi.string().required().min(5),
     name: Joi.string().optional().min(2).max(30),
     about: Joi.string().optional().min(2).max(30),
-    avatar: Joi.string().optional().pattern(regex),
+    avatar: Joi.string().optional().pattern(config.URL_REGEX),
   }),
 }), createUser);
 
@@ -40,7 +38,7 @@ app.post('/signin', celebrate({
     password: Joi.string().required().min(5),
     name: Joi.string().optional().min(2).max(30),
     about: Joi.string().optional().min(2).max(30),
-    avatar: Joi.string().optional().pattern(regex),
+    avatar: Joi.string().optional().pattern(config.URL_REGEX),
   }),
 }), login);
 
@@ -57,6 +55,6 @@ app.use('*', (req, res, next) => {
 app.use(errors());
 app.use(error);
 
-app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`);
+app.listen(config.PORT, () => {
+  console.log(`App listening on port ${config.PORT}`);
 });
