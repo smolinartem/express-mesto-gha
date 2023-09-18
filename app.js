@@ -5,6 +5,8 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 
+const regex = /(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}\.[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})?/;
+
 const auth = require('./middleware/auth');
 const error = require('./middleware/error');
 const userRouter = require('./routes/users');
@@ -28,7 +30,7 @@ app.post('/signup', celebrate({
     password: Joi.string().required().min(5),
     name: Joi.string().optional().min(2).max(30),
     about: Joi.string().optional().min(2).max(30),
-    avatar: Joi.string().optional().uri(),
+    avatar: Joi.string().optional().pattern(regex),
   }),
 }), createUser);
 
@@ -38,7 +40,7 @@ app.post('/signin', celebrate({
     password: Joi.string().required().min(5),
     name: Joi.string().optional().min(2).max(30),
     about: Joi.string().optional().min(2).max(30),
-    avatar: Joi.string().optional().uri(),
+    avatar: Joi.string().optional().pattern(regex),
   }),
 }), login);
 
