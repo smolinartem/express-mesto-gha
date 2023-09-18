@@ -5,6 +5,7 @@ const Users = require('../models/user');
 
 const NotFoundError = require('../errors/notFoundError');
 const BadRequestError = require('../errors/badRequestError');
+const ConflictError = require('../errors/conflictError');
 
 const login = async (req, res, next) => {
   try {
@@ -20,19 +21,25 @@ const login = async (req, res, next) => {
   }
 };
 
-const createUser = async (req, res) => {
+const createUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await Users.create({ email, password: passwordHash });
-    return res.status(201).send({
-      name: user.name, about: user.about, avatar: user.avatar, email: user.email,
+    res.status(201).send({
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
     });
   } catch (err) {
     if (err instanceof Error.ValidationError) {
-      return res.status(400).send({ message: err.message });
+      next(new BadRequestError('Переданы некорректные данные'));
     }
-    return res.status(500).send({ message: err.message });
+    if (err.code === 11000) {
+      next(new ConflictError('Данный email используется'));
+    }
+    next(err);
   }
 };
 

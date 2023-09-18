@@ -1,78 +1,88 @@
 const { Error } = require('mongoose');
 const Cards = require('../models/card');
 
-const getAllCards = (req, res) => {
-  Cards.find({})
-    .then((cards) => res.status(200).send({ cards }))
-    .catch((err) => res.status(500).send({ message: err.message }));
+const BadRequestError = require('../errors/badRequestError');
+const ForbiddenError = require('../errors/forbiddenError');
+const NotFoundError = require('../errors/notFoundError');
+
+const getAllCards = async (req, res, next) => {
+  try {
+    const cards = await Cards.find({});
+    res.status(200).send({ cards });
+  } catch (err) {
+    next(err);
+  }
 };
 
-const createNewCard = (req, res) => {
-  const { name, link } = req.body;
-  const owner = req.user._id;
-
-  Cards.create({ name, link, owner })
-    .then((card) => res.status(201).send({ card }))
-    .catch((err) => {
-      if (err instanceof Error.ValidationError) {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
-      }
-      return res.status(500).send({ message: err.message });
-    });
+const createNewCard = async (req, res, next) => {
+  try {
+    const { name, link } = req.body;
+    const owner = req.user._id;
+    const card = await Cards.create({ name, link, owner });
+    res.status(201).send({ card });
+  } catch (err) {
+    if (err instanceof Error.ValidationError) {
+      next(new BadRequestError(err.message));
+    }
+    next(err);
+  }
 };
 
-const deleteCard = (req, res) => {
-  Cards.findByIdAndDelete(req.params.cardId)
-    .orFail(new Error('NotFound'))
-    .then(() => {
-      res.status(200).send({ message: 'Карточка удалена' });
-    })
-    .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      if (err instanceof Error.CastError) {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
-      }
-      return res.status(500).send({ message: err.message });
-    });
+const deleteCard = async (req, res, next) => {
+  try {
+    const card = await Cards.findById(req.params.cardId).orFail();
+    if (!card.owner.equals(req.user._id)) {
+      throw new ForbiddenError('Нельзя удалять карточки других пользователей');
+    }
+    await Cards.findOneAndDelete(card);
+    res.status(200).send({ message: 'Карточка удалена' });
+  } catch (err) {
+    if (err instanceof Error.DocumentNotFoundError) {
+      next(new NotFoundError('Карточка не найдена'));
+    }
+    if (err instanceof Error.CastError) {
+      next(new BadRequestError('Переданы некорректные данные'));
+    }
+    next(err);
+  }
 };
 
-const likeCard = (req, res) => {
-  Cards.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
-    .orFail(new Error('NotFound'))
-    .then((card) => {
-      res.status(200).send({ card });
-    })
-    .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      if (err instanceof Error.CastError) {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
-      }
-      return res.status(500).send({ message: err.message });
-    });
+const likeCard = async (req, res, next) => {
+  try {
+    const card = await Cards.findByIdAndUpdate(
+      req.params.cardId,
+      { $addToSet: { likes: req.user._id } },
+      { new: true },
+    ).orFail();
+    res.status(200).send({ card });
+  } catch (err) {
+    if (err instanceof Error.DocumentNotFoundError) {
+      next(new NotFoundError('Карточка не найдена'));
+    }
+    if (err instanceof Error.CastError) {
+      next(new BadRequestError('Переданы некорректные данные'));
+    }
+    next(err);
+  }
 };
 
-const dislikeCard = (req, res) => {
-  Cards.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
-    .orFail(new Error('NotFound'))
-    .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      return res.status(200).send({ card });
-    })
-    .catch((err) => {
-      if (err.message === 'NotFound') {
-        return res.status(404).send({ message: 'Карточка не найдена' });
-      }
-      if (err instanceof Error.CastError) {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
-      }
-      return res.status(500).send({ message: err.message });
-    });
+const dislikeCard = async (req, res, next) => {
+  try {
+    const card = await Cards.findByIdAndUpdate(
+      req.params.cardId,
+      { $pull: { likes: req.user._id } },
+      { new: true },
+    ).orFail();
+    res.status(200).send({ card });
+  } catch (err) {
+    if (err instanceof Error.DocumentNotFoundError) {
+      next(new NotFoundError('Карточка не найдена'));
+    }
+    if (err instanceof Error.CastError) {
+      next(new BadRequestError('Переданы некорректные данные'));
+    }
+    next(err);
+  }
 };
 
 module.exports = {
