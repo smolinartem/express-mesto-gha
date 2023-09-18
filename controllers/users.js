@@ -23,9 +23,13 @@ const login = async (req, res, next) => {
 
 const createUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const {
+      email, password, name, about, avatar,
+    } = req.body;
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await Users.create({ email, password: passwordHash });
+    const user = await Users.create({
+      email, password: passwordHash, name, about, avatar,
+    });
     res.status(201).send({
       name: user.name,
       about: user.about,
