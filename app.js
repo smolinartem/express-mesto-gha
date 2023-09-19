@@ -2,7 +2,7 @@ const helmet = require('helmet');
 const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
-const { celebrate, Joi, errors } = require('celebrate');
+const { errors } = require('celebrate');
 const config = require('./config');
 
 const auth = require('./middleware/auth');
@@ -11,6 +11,8 @@ const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const { createUser, login } = require('./controllers/users');
 const NotFoundError = require('./errors/notFoundError');
+
+const { authValidator } = require('./validations/validations');
 
 mongoose
   .connect(config.DB_URL)
@@ -23,31 +25,11 @@ app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
 
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(5),
-    name: Joi.string().optional().min(2).max(30),
-    about: Joi.string().optional().min(2).max(30),
-    avatar: Joi.string().optional().pattern(config.URL_REGEX),
-  }),
-}), createUser);
-
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required().min(5),
-    name: Joi.string().optional().min(2).max(30),
-    about: Joi.string().optional().min(2).max(30),
-    avatar: Joi.string().optional().pattern(config.URL_REGEX),
-  }),
-}), login);
-
+app.post('/signup', authValidator, createUser);
+app.post('/signin', authValidator, login);
 app.use(auth);
-
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
-
 app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
 app.use(errors());
