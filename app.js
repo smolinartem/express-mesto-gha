@@ -10,6 +10,7 @@ const error = require('./middleware/error');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const { createUser, login } = require('./controllers/users');
+const NotFoundError = require('./errors/notFoundError');
 
 mongoose
   .connect(config.DB_URL)
@@ -47,10 +48,7 @@ app.use(auth);
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
-app.use('*', (req, res, next) => {
-  res.status(404).send({ message: 'Страница не найдена' });
-  next();
-});
+app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
 app.use(errors());
 app.use(error);
