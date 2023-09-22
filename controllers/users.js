@@ -8,6 +8,14 @@ const NotFoundError = require('../errors/notFoundError');
 const BadRequestError = require('../errors/badRequestError');
 const ConflictError = require('../errors/conflictError');
 
+const signOut = (req, res, next) => {
+  try {
+    res.clearCookie('jwt').send({ message: 'Осуществлён выход' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -16,6 +24,8 @@ const login = async (req, res, next) => {
     res.cookie('jwt', token, {
       maxAge: 3600000 * 24 * 7,
       httpOnly: true,
+      sameSite: 'none',
+      secure: true,
     }).status(200).send({ message: 'Пользователь авторизировался' });
   } catch (err) {
     next(err);
@@ -125,6 +135,7 @@ const updateAvatar = async (req, res, next) => {
 };
 
 module.exports = {
+  signOut,
   login,
   createUser,
   getAllUsers,
