@@ -25,7 +25,7 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3001'],
+  origin: ['http://localhost:3001', 'http://localhost:3000'],
   credentials: true,
 }));
 app.use(cookieParser());
@@ -36,9 +36,10 @@ app.use(requestLogger);
 app.post('/signup', authValidator, createUser);
 app.post('/signin', authValidator, login);
 app.use(auth);
-app.get('/signout', signOut);
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
+
+app.get('/signout', signOut);
 app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
 app.use(errorLogger);
