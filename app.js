@@ -35,8 +35,8 @@ app.use(requestLogger);
 
 app.post('/signup', authValidator, createUser);
 app.post('/signin', authValidator, login);
-app.get('/signout', signOut);
 app.use(auth);
+app.get('/signout', signOut);
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
