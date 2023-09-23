@@ -31,6 +31,7 @@ app.use(
       'http://localhost:3001',
       'http://localhost:3000',
       'http://mesto.krutopognali.nomoredomainsrocks.ru',
+      'http://mesto.krutopognali.nomoredomainsrocks.ru/api',
     ],
     credentials: true,
   }),

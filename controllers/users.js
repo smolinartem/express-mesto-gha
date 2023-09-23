@@ -26,6 +26,7 @@ const login = async (req, res, next) => {
       httpOnly: true,
       /*       sameSite: 'none',
       secure: true, */
+      sameSite: 'none',
     }).status(200).send({ message: 'Пользователь авторизировался' });
   } catch (err) {
     next(err);
