@@ -1,3 +1,4 @@
+const path = require('path');
 const helmet = require('helmet');
 const express = require('express');
 const mongoose = require('mongoose');
@@ -39,13 +40,15 @@ app.use(express.json());
 
 app.use(requestLogger);
 
-app.post('/signup', authValidator, createUser);
-app.post('/signin', authValidator, login);
-app.use(auth);
-app.use('/users', userRouter);
-app.use('/cards', cardRouter);
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/signout', signOut);
+app.post('/api/signup', authValidator, createUser);
+app.post('/api/signin', authValidator, login);
+app.use(auth);
+app.use('/api/users', userRouter);
+app.use('/api/cards', cardRouter);
+
+app.get('/api/signout', signOut);
 app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
 app.use(errorLogger);
