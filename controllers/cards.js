@@ -18,7 +18,7 @@ const createNewCard = async (req, res, next) => {
   try {
     const { name, link } = req.body;
     const owner = req.user._id;
-    const card = await Cards.create({ name, link, owner }, { runValidators: true });
+    const card = await Cards.create({ name, link, owner });
     res.status(201).send({ card });
   } catch (err) {
     if (err instanceof Error.ValidationError) {
